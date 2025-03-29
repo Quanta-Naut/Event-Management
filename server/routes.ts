@@ -1,19 +1,105 @@
-import type { Express, Request, Response } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { 
   insertContactSubmissionSchema, 
   insertPortfolioItemSchema, 
-  insertTestimonialSchema 
+  insertTestimonialSchema,
+  insertUserSchema
 } from "@shared/schema";
+import { login, register, requireAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Base API route
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok" });
   });
+  
+  // Authentication routes
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+      
+      const result = await login(username, password);
+      
+      if (!result) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+      
+      const { user, token } = result;
+      
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username
+        }
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+  
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const result = insertUserSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid user data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const { username, password } = result.data;
+      
+      const registerResult = await register(username, password);
+      
+      if (!registerResult) {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+      
+      const { user, token } = registerResult;
+      
+      res.status(201).json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username
+        }
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Registration failed" });
+    }
+  });
+  
+  // Auth verification endpoint
+  app.get("/api/auth/verify", requireAuth, (req, res) => {
+    // If we get here, the token is valid
+    res.json({ 
+      user: (req as any).user,
+      message: "Token is valid" 
+    });
+  });
 
+  // Apply auth middleware to admin-only operations
+  const protectAdminRoutes = (req: Request, res: Response, next: NextFunction) => {
+    // Skip auth for GET endpoints since they're publicly accessible
+    if (req.method === 'GET') {
+      return next();
+    }
+    
+    // Apply requireAuth for all other methods (POST, PUT, PATCH, DELETE)
+    return requireAuth(req, res, next);
+  };
+  
   // Portfolio routes
   app.get("/api/portfolio", async (_req, res) => {
     try {
@@ -42,7 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/portfolio", async (req, res) => {
+  app.post("/api/portfolio", requireAuth, async (req, res) => {
     try {
       const result = insertPortfolioItemSchema.safeParse(req.body);
       if (!result.success) {
@@ -59,7 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/portfolio/:id", async (req, res) => {
+  app.put("/api/portfolio/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -85,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/portfolio/:id", async (req, res) => {
+  app.delete("/api/portfolio/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -110,7 +196,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/testimonials", async (req, res) => {
+  app.post("/api/testimonials", requireAuth, async (req, res) => {
     try {
       const result = insertTestimonialSchema.safeParse(req.body);
       if (!result.success) {
@@ -127,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/testimonials/:id", async (req, res) => {
+  app.put("/api/testimonials/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -153,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/testimonials/:id", async (req, res) => {
+  app.delete("/api/testimonials/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -169,7 +255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Contact submission routes
-  app.get("/api/contact", async (_req, res) => {
+  app.get("/api/contact", requireAuth, async (_req, res) => {
     try {
       const submissions = await storage.getContactSubmissions();
       res.json(submissions);
@@ -195,7 +281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/contact/:id/read", async (req, res) => {
+  app.patch("/api/contact/:id/read", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -213,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/contact/:id", async (req, res) => {
+  app.delete("/api/contact/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {

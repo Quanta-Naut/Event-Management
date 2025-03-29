@@ -5,22 +5,25 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Admin from "@/pages/admin";
+import AuthPage from "@/pages/auth-page";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import MobileMenu from "@/components/layout/mobile-menu";
 import CommandBar from "@/components/layout/command-bar";
 import PortfolioModal from "@/components/portfolio/portfolio-modal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
+import { ProtectedRoute } from "@/components/auth/protected-route";
+import { AuthProvider } from "@/lib/hooks/use-auth";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/">{(params) => <Home />}</Route>
-      {/* Change exact admin path to match correctly */}
-      <Route path="/admin">{(params) => <Admin />}</Route>
-      <Route path="/admin/*">{(params) => <Admin />}</Route>
-      <Route>{(params) => <NotFound />}</Route>
+      <Route path="/">{() => <Home />}</Route>
+      <Route path="/auth">{() => <AuthPage />}</Route>
+      <ProtectedRoute path="/admin" component={Admin} />
+      <ProtectedRoute path="/admin/*" component={Admin} />
+      <Route>{() => <NotFound />}</Route>
     </Switch>
   );
 }
@@ -47,54 +50,56 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen flex flex-col bg-background text-foreground font-sans">
-        <Header 
-          toggleMobileMenu={toggleMobileMenu}
-          toggleCommandBar={toggleCommandBar}
-        />
-        <main className="flex-grow">
-          <Router />
-        </main>
-        <Footer />
+      <AuthProvider>
+        <div className="min-h-screen flex flex-col bg-background text-foreground font-sans">
+          <Header 
+            toggleMobileMenu={toggleMobileMenu}
+            toggleCommandBar={toggleCommandBar}
+          />
+          <main className="flex-grow">
+            <Router />
+          </main>
+          <Footer />
+          
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <MobileMenu 
+                isOpen={mobileMenuOpen} 
+                onClose={() => setMobileMenuOpen(false)} 
+              />
+            )}
+          </AnimatePresence>
+          
+          <AnimatePresence>
+            {commandBarOpen && (
+              <CommandBar 
+                isOpen={commandBarOpen} 
+                onClose={() => setCommandBarOpen(false)} 
+              />
+            )}
+          </AnimatePresence>
+          
+          <AnimatePresence>
+            {portfolioModalOpen && selectedPortfolioId !== null && (
+              <PortfolioModal 
+                isOpen={portfolioModalOpen}
+                onClose={closePortfolioModal}
+                portfolioId={selectedPortfolioId}
+              />
+            )}
+          </AnimatePresence>
+        </div>
         
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <MobileMenu 
-              isOpen={mobileMenuOpen} 
-              onClose={() => setMobileMenuOpen(false)} 
-            />
-          )}
-        </AnimatePresence>
+        {/* Global context for portfolio modal */}
+        <div className="hidden">
+          <div id="portfolio-modal-context" 
+            data-open={openPortfolioModal.toString()} 
+            data-close={closePortfolioModal.toString()}
+          />
+        </div>
         
-        <AnimatePresence>
-          {commandBarOpen && (
-            <CommandBar 
-              isOpen={commandBarOpen} 
-              onClose={() => setCommandBarOpen(false)} 
-            />
-          )}
-        </AnimatePresence>
-        
-        <AnimatePresence>
-          {portfolioModalOpen && selectedPortfolioId !== null && (
-            <PortfolioModal 
-              isOpen={portfolioModalOpen}
-              onClose={closePortfolioModal}
-              portfolioId={selectedPortfolioId}
-            />
-          )}
-        </AnimatePresence>
-      </div>
-      
-      {/* Global context for portfolio modal */}
-      <div className="hidden">
-        <div id="portfolio-modal-context" 
-          data-open={openPortfolioModal.toString()} 
-          data-close={closePortfolioModal.toString()}
-        />
-      </div>
-      
-      <Toaster />
+        <Toaster />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
