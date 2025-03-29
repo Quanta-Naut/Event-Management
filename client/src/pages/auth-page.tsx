@@ -1,211 +1,235 @@
-import { useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/lib/hooks/use-auth';
-import { Loader2 } from 'lucide-react';
+import { useState } from "react";
+import { Redirect } from "wouter";
+import { motion } from "framer-motion";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 
+// Form schema
 const authFormSchema = z.object({
-  username: z.string().min(3, {
-    message: 'Username must be at least 3 characters',
-  }),
-  password: z.string().min(6, {
-    message: 'Password must be at least 6 characters',
-  }),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type AuthFormValues = z.infer<typeof authFormSchema>;
 
 export default function AuthPage() {
-  const [, setLocation] = useLocation();
-  const { login, isAuthenticated, isLoading } = useAuth();
+  const { user, isLoading, loginMutation, registerMutation } = useAuth();
+  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
 
+  // Create form
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(authFormSchema),
     defaultValues: {
-      username: '',
-      password: '',
+      username: "",
+      password: "",
     },
   });
 
-  useEffect(() => {
-    // Redirect to admin page if already authenticated
-    if (isAuthenticated) {
-      setLocation('/admin');
-    }
-  }, [isAuthenticated, setLocation]);
-
   const onSubmit = async (values: AuthFormValues) => {
-    await login(values.username, values.password);
+    if (activeTab === "login") {
+      loginMutation.mutate(values);
+    } else {
+      registerMutation.mutate(values);
+    }
   };
 
-  if (isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Redirecting...</span>
-      </div>
-    );
+  // If the user is already logged in, redirect to home page
+  if (!isLoading && user) {
+    return <Redirect to="/" />;
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Auth Form */}
-      <div className="flex flex-col justify-center w-full md:w-1/2 px-4 py-12 sm:px-6 lg:px-20 xl:px-24">
-        <div className="mx-auto w-full max-w-sm">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold">Event Horizon</h1>
-            <p className="text-muted-foreground mt-2">
-              Sign in to access the admin dashboard
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-background/80">
+      <div className="w-full max-w-6xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+        {/* Auth Form Column */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md mx-auto"
+        >
+          <Card className="border-none shadow-xl bg-background/50 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold text-center">Welcome</CardTitle>
+              <CardDescription className="text-center">
+                Log in to manage your event portfolio
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs 
+                defaultValue="login" 
+                value={activeTab} 
+                onValueChange={(value) => setActiveTab(value as "login" | "register")}
+                className="w-full"
+              >
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="login">Login</TabsTrigger>
+                  <TabsTrigger value="register">Register</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="login">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Username</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Enter your username" 
+                                {...field} 
+                                disabled={loginMutation.isPending}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="password" 
+                                placeholder="Enter your password" 
+                                {...field} 
+                                disabled={loginMutation.isPending}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button 
+                        type="submit" 
+                        className="w-full"
+                        disabled={loginMutation.isPending}
+                      >
+                        {loginMutation.isPending ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Logging in...</>
+                        ) : (
+                          'Log In'
+                        )}
+                      </Button>
+                    </form>
+                  </Form>
+                </TabsContent>
+
+                <TabsContent value="register">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Username</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Create a username" 
+                                {...field} 
+                                disabled={registerMutation.isPending}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="password" 
+                                placeholder="Create a password" 
+                                {...field} 
+                                disabled={registerMutation.isPending}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button 
+                        type="submit" 
+                        className="w-full"
+                        disabled={registerMutation.isPending}
+                      >
+                        {registerMutation.isPending ? (
+                          <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account...</>
+                        ) : (
+                          'Create Account'
+                        )}
+                      </Button>
+                    </form>
+                  </Form>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+            <CardFooter className="flex justify-center text-sm text-muted-foreground">
+              {activeTab === "login" ? (
+                <p>Don't have an account? <Button variant="link" className="p-0 h-auto" onClick={() => setActiveTab("register")}>Sign up</Button></p>
+              ) : (
+                <p>Already have an account? <Button variant="link" className="p-0 h-auto" onClick={() => setActiveTab("login")}>Log in</Button></p>
+              )}
+            </CardFooter>
+          </Card>
+        </motion.div>
+
+        {/* Hero Column */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.7, delay: 0.3 }}
+          className="hidden md:flex flex-col justify-center h-full"
+        >
+          <div className="space-y-4">
+            <h1 className="text-4xl font-bold tracking-tight">
+              Event Management Dashboard
+            </h1>
+            <p className="text-xl text-muted-foreground">
+              Manage your portfolio, testimonials, and client inquiries from a single, intuitive dashboard.
             </p>
+            <div className="flex flex-col space-y-2 mt-6">
+              <div className="flex items-center space-x-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                <span>Create and update portfolio showcases</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                <span>Add client testimonials and feedback</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                <span>Respond to client inquiries</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                <span>Manage user accounts</span>
+              </div>
+            </div>
           </div>
-
-          <div className="w-full">
-            <Card>
-              <CardHeader>
-                <CardTitle>Welcome back</CardTitle>
-                <CardDescription>
-                  Enter your credentials to access the dashboard
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="username"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Username</FormLabel>
-                          <FormControl>
-                            <Input placeholder="username" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input type="password" placeholder="••••••" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <Button type="submit" className="w-full mt-4" disabled={isLoading}>
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Please wait
-                        </>
-                      ) : (
-                        'Sign In'
-                      )}
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <div className="hidden md:flex md:w-1/2 bg-gradient-to-r from-gray-900 to-black flex-col justify-center p-12">
-        <div className="mx-auto max-w-md text-white">
-          <h2 className="text-4xl font-bold mb-6">Event Management Dashboard</h2>
-          <p className="text-lg mb-6">
-            Welcome to the admin portal for Event Horizon. Manage your portfolio, testimonials,
-            and contact submissions all in one place.
-          </p>
-          <ul className="space-y-2">
-            <li className="flex items-center">
-              <svg
-                className="h-5 w-5 mr-2 text-green-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M5 13l4 4L19 7"
-                ></path>
-              </svg>
-              Portfolio Management
-            </li>
-            <li className="flex items-center">
-              <svg
-                className="h-5 w-5 mr-2 text-green-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M5 13l4 4L19 7"
-                ></path>
-              </svg>
-              Testimonial Handling
-            </li>
-            <li className="flex items-center">
-              <svg
-                className="h-5 w-5 mr-2 text-green-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M5 13l4 4L19 7"
-                ></path>
-              </svg>
-              Contact Form Submissions
-            </li>
-            <li className="flex items-center">
-              <svg
-                className="h-5 w-5 mr-2 text-green-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M5 13l4 4L19 7"
-                ></path>
-              </svg>
-              User Management
-            </li>
-          </ul>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

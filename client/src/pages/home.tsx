@@ -685,7 +685,7 @@ const ContactSection = () => {
                       <FormLabel>Event Type</FormLabel>
                       <Select 
                         onValueChange={field.onChange} 
-                        defaultValue={field.value}
+                        defaultValue={field.value as string | undefined}
                         disabled={mutation.isPending}
                       >
                         <FormControl>
