@@ -6,12 +6,15 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, asc } from "drizzle-orm";
+import { generatePasswordHash } from "./auth";
 
 export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
+  getUsers(): Promise<User[]>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  deleteUser(id: number): Promise<boolean>;
   
   // Portfolio methods
   getPortfolioItems(): Promise<PortfolioItem[]>;
@@ -35,15 +38,37 @@ export interface IStorage {
 }
 
 // Initialize the database with sample data
+
 async function initializeSampleData() {
   // Check if we already have data
   const existingPortfolioItems = await db.select().from(portfolioItems);
   if (existingPortfolioItems.length > 0) {
     console.log("Sample data already exists, skipping initialization");
+    
+    // Check if we have a default admin user, create one if not
+    const existingUsers = await db.select().from(users);
+    if (existingUsers.length === 0) {
+      console.log("Creating default admin user...");
+      const hashedPassword = await generatePasswordHash("admin123");
+      await db.insert(users).values({
+        username: "admin",
+        password: hashedPassword
+      });
+      console.log("Default admin user created");
+    }
+    
     return;
   }
 
   console.log("Initializing sample data in the database...");
+  
+  // Create default admin user
+  const hashedPassword = await generatePasswordHash("admin123");
+  await db.insert(users).values({
+    username: "admin",
+    password: hashedPassword
+  });
+  console.log("Default admin user created");
   
   // Sample portfolio items
   const portfolioSamples: InsertPortfolioItem[] = [
@@ -173,6 +198,10 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUsers(): Promise<User[]> {
+    return db.select().from(users).orderBy(asc(users.id));
+  }
+
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
     return user;
@@ -181,6 +210,15 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  async deleteUser(id: number): Promise<boolean> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    if (!user) {
+      return false;
+    }
+    await db.delete(users).where(eq(users.id, id));
+    return true;
   }
 
   // Portfolio methods

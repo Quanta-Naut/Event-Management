@@ -314,6 +314,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin user management routes
+  app.get("/api/admin/users", requireAuth, async (_req, res) => {
+    try {
+      const users = await storage.getUsers();
+      // Do not send passwords to the client
+      const sanitizedUsers = users.map(user => ({
+        id: user.id,
+        username: user.username
+      }));
+      res.json(sanitizedUsers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch admin users" });
+    }
+  });
+
+  app.post("/api/admin/users", requireAuth, async (req, res) => {
+    try {
+      const result = insertUserSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid user data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const { username, password } = result.data;
+      const registerResult = await register(username, password);
+      
+      if (!registerResult) {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+      
+      const { user } = registerResult;
+      
+      res.status(201).json({
+        id: user.id,
+        username: user.username
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create admin user" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", requireAuth, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      // Don't allow deleting own account
+      if ((req as any).user.id === id) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+      
+      const success = await storage.deleteUser(id);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.status(204).end();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete admin user" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

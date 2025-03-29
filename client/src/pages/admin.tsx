@@ -5,6 +5,7 @@ import { Dashboard } from "@/components/admin/dashboard";
 import { PortfolioManager } from "@/components/admin/portfolio-manager";
 import { TestimonialManager } from "@/components/admin/testimonial-manager";
 import { ContactManager } from "@/components/admin/contact-manager";
+import { UserManager } from "@/components/admin/user-manager";
 import NotFound from "@/pages/not-found";
 
 const Admin = () => {
@@ -32,6 +33,8 @@ const Admin = () => {
     currentView = <AdminTestimonials />;
   } else if (location === "/admin/inquiries") {
     currentView = <AdminInquiries />;
+  } else if (location === "/admin/users") {
+    currentView = <AdminUsers />;
   } else {
     currentView = <AdminNotFound />;
   }
@@ -71,6 +74,13 @@ const AdminInquiries = () => (
   <div>
     <h1 className="text-2xl font-bold mb-6">Contact Inquiries</h1>
     <ContactManager />
+  </div>
+);
+
+const AdminUsers = () => (
+  <div>
+    <h1 className="text-2xl font-bold mb-6">User Management</h1>
+    <UserManager />
   </div>
 );
 

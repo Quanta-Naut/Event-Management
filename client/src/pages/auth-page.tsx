@@ -1,9 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,7 +13,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { Loader2 } from 'lucide-react';
 
@@ -30,9 +29,8 @@ const authFormSchema = z.object({
 type AuthFormValues = z.infer<typeof authFormSchema>;
 
 export default function AuthPage() {
-  const [activeTab, setActiveTab] = useState<string>('login');
   const [, setLocation] = useLocation();
-  const { login, register, isAuthenticated, isLoading } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
 
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(authFormSchema),
@@ -50,11 +48,7 @@ export default function AuthPage() {
   }, [isAuthenticated, setLocation]);
 
   const onSubmit = async (values: AuthFormValues) => {
-    if (activeTab === 'login') {
-      await login(values.username, values.password);
-    } else {
-      await register(values.username, values.password);
-    }
+    await login(values.username, values.password);
   };
 
   if (isAuthenticated) {
@@ -78,26 +72,12 @@ export default function AuthPage() {
             </p>
           </div>
 
-          <Tabs
-            defaultValue="login"
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
-            </TabsList>
-
+          <div className="w-full">
             <Card>
               <CardHeader>
-                <CardTitle>
-                  {activeTab === 'login' ? 'Welcome back' : 'Create an account'}
-                </CardTitle>
+                <CardTitle>Welcome back</CardTitle>
                 <CardDescription>
-                  {activeTab === 'login'
-                    ? 'Enter your credentials to access the dashboard'
-                    : 'Enter your information to create a new account'}
+                  Enter your credentials to access the dashboard
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -135,17 +115,15 @@ export default function AuthPage() {
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Please wait
                         </>
-                      ) : activeTab === 'login' ? (
-                        'Sign In'
                       ) : (
-                        'Create Account'
+                        'Sign In'
                       )}
                     </Button>
                   </form>
                 </Form>
               </CardContent>
             </Card>
-          </Tabs>
+          </div>
         </div>
       </div>
 
@@ -208,6 +186,23 @@ export default function AuthPage() {
                 ></path>
               </svg>
               Contact Form Submissions
+            </li>
+            <li className="flex items-center">
+              <svg
+                className="h-5 w-5 mr-2 text-green-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+              User Management
             </li>
           </ul>
         </div>
