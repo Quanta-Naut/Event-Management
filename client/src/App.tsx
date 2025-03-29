@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -48,18 +48,25 @@ function App() {
     setTimeout(() => setSelectedPortfolioId(null), 300);
   };
 
+  const [location] = useLocation();
+  const isAdminPage = location.startsWith("/admin");
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <div className="min-h-screen flex flex-col bg-background text-foreground font-sans">
-          <Header 
-            toggleMobileMenu={toggleMobileMenu}
-            toggleCommandBar={toggleCommandBar}
-          />
-          <main className="flex-grow">
+          {/* Only show header on non-admin pages */}
+          {!isAdminPage && (
+            <Header 
+              toggleMobileMenu={toggleMobileMenu}
+              toggleCommandBar={toggleCommandBar}
+            />
+          )}
+          <main className={`flex-grow ${isAdminPage ? 'pt-0' : ''}`}>
             <Router />
           </main>
-          <Footer />
+          {/* Only show footer on non-admin pages */}
+          {!isAdminPage && <Footer />}
           
           <AnimatePresence>
             {mobileMenuOpen && (
