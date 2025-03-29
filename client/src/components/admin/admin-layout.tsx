@@ -1,6 +1,5 @@
 import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface AdminLayoutProps {
@@ -238,9 +237,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   <div className="mr-3">{route.icon}</div>
                   {route.name}
                   {location === route.path && (
-                    <motion.div
-                      layoutId="sidebar-indicator"
-                      className="absolute left-0 w-1 h-6 bg-primary rounded-r-full"
+                    <span
+                      className="absolute left-0 w-1 h-6 bg-primary rounded-r-full transition-all"
                     />
                   )}
                 </Link>
