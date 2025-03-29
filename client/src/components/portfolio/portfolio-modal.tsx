@@ -112,7 +112,7 @@ const PortfolioModal = ({ isOpen, onClose, portfolioId }: PortfolioModalProps) =
                     <div>
                       <h4 className="text-lg font-semibold mb-2">Our Role</h4>
                       <ul className="list-disc pl-5 text-muted-foreground space-y-1">
-                        {Array.isArray(item.role) && item.role.map((point, index) => (
+                        {item.role && Array.isArray(item.role) && item.role.map((point: string, index: number) => (
                           <li key={index}>{point}</li>
                         ))}
                       </ul>
@@ -126,7 +126,7 @@ const PortfolioModal = ({ isOpen, onClose, portfolioId }: PortfolioModalProps) =
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      {item.tags.map((tag, index) => (
+                      {item.tags && Array.isArray(item.tags) && item.tags.map((tag: string, index: number) => (
                         <Badge key={index} variant="outline" className="text-xs text-primary border-primary/30 bg-primary/5">
                           {tag}
                         </Badge>
