@@ -78,7 +78,7 @@ export function ContactManager() {
     if (itemToDelete === null) return;
 
     deleteMutation.mutate(itemToDelete, {
-      onSuccess: () => {
+      onSuccess: (result) => {
         toast({
           title: "Message deleted",
           description: "The contact submission has been deleted successfully.",

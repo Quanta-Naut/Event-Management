@@ -36,12 +36,15 @@ export function useUpdateTestimonial() {
 export function useDeleteTestimonial() {
   return useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/testimonials/${id}`);
-      return id;
+      const response = await apiRequest("DELETE", `/api/testimonials/${id}`);
+      // Handle 204 No Content response
+      return { id, status: response.status };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/testimonials'] });
     },
+    // Make sure we don't retry on failed mutations
+    retry: false,
   });
 }
 
@@ -66,11 +69,14 @@ export function useMarkContactAsRead() {
 export function useDeleteContactSubmission() {
   return useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/contact/${id}`);
-      return id;
+      const response = await apiRequest("DELETE", `/api/contact/${id}`);
+      // Handle 204 No Content response
+      return { id, status: response.status };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/contact'] });
     },
+    // Make sure we don't retry on failed mutations
+    retry: false,
   });
 }

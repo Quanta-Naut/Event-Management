@@ -145,7 +145,7 @@ export function TestimonialManager() {
     if (itemToDelete === null) return;
 
     deleteMutation.mutate(itemToDelete, {
-      onSuccess: () => {
+      onSuccess: (result) => {
         toast({
           title: "Testimonial deleted",
           description: "The testimonial has been deleted successfully.",

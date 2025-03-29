@@ -44,11 +44,14 @@ export function useUpdatePortfolioItem() {
 export function useDeletePortfolioItem() {
   return useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/portfolio/${id}`);
-      return id;
+      const response = await apiRequest("DELETE", `/api/portfolio/${id}`);
+      // Handle 204 No Content response
+      return { id, status: response.status };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/portfolio'] });
     },
+    // Make sure we don't retry on failed mutations
+    retry: false,
   });
 }
