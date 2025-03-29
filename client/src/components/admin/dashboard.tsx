@@ -3,22 +3,23 @@ import { useTestimonials, useContactSubmissions } from "@/lib/hooks/use-testimon
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { type PortfolioItem, type Testimonial, type ContactSubmission } from "@shared/schema";
 
 export function Dashboard() {
   console.log("Dashboard component is rendering");
   
-  const { data: portfolioItems } = usePortfolioItems();
-  const { data: testimonials } = useTestimonials();
-  const { data: contactSubmissions } = useContactSubmissions();
+  const { data: portfolioItems = [] } = usePortfolioItems() as { data: PortfolioItem[] };
+  const { data: testimonials = [] } = useTestimonials() as { data: Testimonial[] };
+  const { data: contactSubmissions = [] } = useContactSubmissions() as { data: ContactSubmission[] };
   
   console.log("Dashboard data:", { 
-    portfolioItems: portfolioItems?.length || 0, 
-    testimonials: testimonials?.length || 0,
-    contactSubmissions: contactSubmissions?.length || 0
+    portfolioItems: portfolioItems.length,
+    testimonials: testimonials.length,
+    contactSubmissions: contactSubmissions.length
   });
 
   // Count unread messages
-  const unreadCount = contactSubmissions?.filter((submission: any) => !submission.read).length || 0;
+  const unreadCount = contactSubmissions.filter(submission => !submission.read).length;
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -39,7 +40,7 @@ export function Dashboard() {
           </svg>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{portfolioItems?.length || 0}</div>
+          <div className="text-2xl font-bold">{portfolioItems.length}</div>
           <p className="text-xs text-muted-foreground">
             Total portfolio projects
           </p>
@@ -67,7 +68,7 @@ export function Dashboard() {
           </svg>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{testimonials?.length || 0}</div>
+          <div className="text-2xl font-bold">{testimonials.length}</div>
           <p className="text-xs text-muted-foreground">
             Client testimonials
           </p>
@@ -96,7 +97,7 @@ export function Dashboard() {
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center">
-            <div className="text-2xl font-bold">{contactSubmissions?.length || 0}</div>
+            <div className="text-2xl font-bold">{contactSubmissions.length}</div>
             {unreadCount > 0 && (
               <div className="bg-primary text-primary-foreground text-xs font-bold rounded-full px-2 py-1">
                 {unreadCount} new

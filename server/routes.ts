@@ -92,11 +92,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid ID format" });
       }
       
-      const success = await storage.deletePortfolioItem(id);
-      if (!success) {
-        return res.status(404).json({ message: "Portfolio item not found" });
-      }
-      
+      // Even if item is not found, we return 204 as the end result is the same
+      await storage.deletePortfolioItem(id);
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete portfolio item" });
@@ -163,11 +160,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid ID format" });
       }
       
-      const success = await storage.deleteTestimonial(id);
-      if (!success) {
-        return res.status(404).json({ message: "Testimonial not found" });
-      }
-      
+      // Even if item is not found, we return 204 as the end result is the same
+      await storage.deleteTestimonial(id);
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete testimonial" });
@@ -226,11 +220,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid ID format" });
       }
       
-      const success = await storage.deleteContactSubmission(id);
-      if (!success) {
-        return res.status(404).json({ message: "Contact submission not found" });
-      }
-      
+      // Even if item is not found, we return 204 as the end result is the same
+      await storage.deleteContactSubmission(id);
       res.status(204).end();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete contact submission" });

@@ -41,7 +41,7 @@ import { type ContactSubmission } from "@shared/schema";
 
 export function ContactManager() {
   const { toast } = useToast();
-  const { data: submissions, isLoading } = useContactSubmissions();
+  const { data: submissions = [], isLoading } = useContactSubmissions() as { data: ContactSubmission[], isLoading: boolean };
   const [selectedSubmission, setSelectedSubmission] = useState<ContactSubmission | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -135,7 +135,7 @@ export function ContactManager() {
                     <TableCell className="font-medium">{submission.name}</TableCell>
                     <TableCell>{submission.email}</TableCell>
                     <TableCell>{submission.eventType || "Not specified"}</TableCell>
-                    <TableCell>{formatDistanceToNow(new Date(submission.createdAt), { addSuffix: true })}</TableCell>
+                    <TableCell>{submission.createdAt ? formatDistanceToNow(new Date(submission.createdAt), { addSuffix: true }) : 'Unknown'}</TableCell>
                     <TableCell>
                       {submission.read ? (
                         <Badge variant="outline" className="text-muted-foreground">
@@ -218,7 +218,7 @@ export function ContactManager() {
               
               <div className="grid grid-cols-[100px_1fr] gap-2">
                 <div className="font-medium text-muted-foreground">Date:</div>
-                <div>{new Date(selectedSubmission.createdAt).toLocaleString()}</div>
+                <div>{selectedSubmission.createdAt ? new Date(selectedSubmission.createdAt).toLocaleString() : 'Unknown'}</div>
               </div>
               
               <div className="border-t pt-4">
