@@ -82,10 +82,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Auth verification endpoint
   app.get("/api/auth/verify", requireAuth, (req, res) => {
-    // If we get here, the token is valid
-    res.json({ 
-      user: (req as any).user,
-      message: "Token is valid" 
+    // If we get here, the token is valid and req.user is set by the requireAuth middleware
+    res.json({
+      user: {
+        id: (req as any).user.id,
+        username: (req as any).user.username
+      }
     });
   });
 
