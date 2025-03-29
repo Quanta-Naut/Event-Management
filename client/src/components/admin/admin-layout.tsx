@@ -118,46 +118,83 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-
-      <div className="flex flex-1">
-        {/* Sidebar - visible on all screen sizes */}
-        <div className="w-64 flex-shrink-0">
-          <div className="h-screen sticky top-0 flex flex-col border-r border-border pt-5 bg-card overflow-y-auto">
-            <div className="flex items-center justify-center flex-shrink-0 px-4">
+    <div className="min-h-screen flex flex-col md:flex-row bg-background">
+      {/* Mobile Sidebar Toggle */}
+      <div className="md:hidden p-4 border-b border-border flex items-center space-x-3 sticky top-0 z-40 bg-background">
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 rounded-md bg-secondary text-foreground"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+        <span className="text-lg font-medium">Admin Dashboard</span>
+      </div>
+      
+      {/* Sidebar - Different versions for mobile and desktop */}
+      {/* Mobile Sidebar - overlays content when active */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-50 bg-background/80 backdrop-blur-sm pt-16">
+          <div className="fixed inset-y-0 left-0 w-64 bg-card overflow-y-auto h-full border-r border-border p-4">
+            <div className="flex items-center justify-between mb-6">
               <Link href="/" className="text-primary font-bold text-xl">
                 EventForge
               </Link>
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-1 rounded-md text-muted-foreground hover:text-foreground"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
             </div>
-            <div className="mt-8 flex-1 flex flex-col">
-              <nav className="flex-1 px-4 space-y-2">
-                {routes.map((route) => (
-                  <Link 
-                    key={route.path} 
-                    href={route.path}
-                    className={cn(
-                      "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors relative",
-                      location === route.path
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-secondary"
-                    )}
-                  >
-                    <div className="mr-3">{route.icon}</div>
-                    {route.name}
-                    {location === route.path && (
-                      <motion.div
-                        layoutId="sidebar-indicator"
-                        className="absolute left-0 w-1 h-6 bg-primary rounded-r-full"
-                      />
-                    )}
-                  </Link>
-                ))}
-              </nav>
-            </div>
-            <div className="p-4 border-t border-border">
+            <nav className="space-y-2">
+              {routes.map((route) => (
+                <Link
+                  key={route.path}
+                  href={route.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={cn(
+                    "flex items-center space-x-3 px-3 py-3 rounded-md transition-colors",
+                    location === route.path
+                      ? "bg-primary/10 text-primary font-medium"
+                      : "text-muted-foreground hover:bg-secondary"
+                  )}
+                >
+                  <div>{route.icon}</div>
+                  <span>{route.name}</span>
+                </Link>
+              ))}
+            </nav>
+            <div className="pt-6 mt-6 border-t border-border">
               <Link 
                 href="/"
-                className="flex items-center space-x-3 px-3 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center space-x-3 px-3 py-3 rounded-md text-muted-foreground hover:text-foreground transition-colors"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -178,12 +215,70 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             </div>
           </div>
         </div>
-
-        {/* Main Content */}
-        <main className="flex-1">
-          <div className="py-6 px-4 sm:px-6 lg:px-8">{children}</div>
-        </main>
+      )}
+      
+      {/* Desktop Sidebar - always visible */}
+      <div className="hidden md:block w-64 flex-shrink-0">
+        <div className="h-screen sticky top-0 flex flex-col border-r border-border pt-5 bg-card overflow-y-auto">
+          <div className="flex items-center justify-center flex-shrink-0 px-4">
+            <Link href="/" className="text-primary font-bold text-xl">
+              EventForge
+            </Link>
+          </div>
+          <div className="mt-8 flex-1 flex flex-col">
+            <nav className="flex-1 px-4 space-y-2">
+              {routes.map((route) => (
+                <Link 
+                  key={route.path} 
+                  href={route.path}
+                  className={cn(
+                    "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors relative",
+                    location === route.path
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-secondary"
+                  )}
+                >
+                  <div className="mr-3">{route.icon}</div>
+                  {route.name}
+                  {location === route.path && (
+                    <motion.div
+                      layoutId="sidebar-indicator"
+                      className="absolute left-0 w-1 h-6 bg-primary rounded-r-full"
+                    />
+                  )}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div className="p-4 border-t border-border">
+            <Link 
+              href="/"
+              className="flex items-center space-x-3 px-3 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 17l-5-5m0 0l5-5m-5 5h12"
+                />
+              </svg>
+              <span>Back to Website</span>
+            </Link>
+          </div>
+        </div>
       </div>
+
+      {/* Main Content */}
+      <main className="flex-1">
+        <div className="py-6 px-4 sm:px-6 lg:px-8">{children}</div>
+      </main>
     </div>
   );
 }

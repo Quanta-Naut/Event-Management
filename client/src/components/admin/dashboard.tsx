@@ -22,7 +22,7 @@ export function Dashboard() {
   const unreadCount = contactSubmissions.filter(submission => !submission.read).length;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Portfolio Items</CardTitle>
@@ -114,16 +114,16 @@ export function Dashboard() {
           </Link>
         </CardFooter>
       </Card>
-      <Card className="md:col-span-2 lg:col-span-3">
+      <Card className="col-span-1 sm:col-span-2 lg:col-span-3">
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
           <CardDescription>
             Manage your website content and respond to inquiries
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <CardContent className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Link href="/admin/portfolio">
-            <Button variant="outline" className="w-full h-24 flex flex-col gap-2">
+            <Button variant="outline" className="w-full h-20 sm:h-24 flex flex-col gap-2 relative">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -132,15 +132,15 @@ export function Dashboard() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
-                className="h-6 w-6"
+                className="h-5 w-5 sm:h-6 sm:w-6"
               >
                 <path d="M12 5v14M5 12h14" />
               </svg>
-              Add Portfolio Item
+              <span className="text-sm">Add Portfolio Item</span>
             </Button>
           </Link>
           <Link href="/admin/testimonials">
-            <Button variant="outline" className="w-full h-24 flex flex-col gap-2">
+            <Button variant="outline" className="w-full h-20 sm:h-24 flex flex-col gap-2 relative">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -149,15 +149,15 @@ export function Dashboard() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
-                className="h-6 w-6"
+                className="h-5 w-5 sm:h-6 sm:w-6"
               >
                 <path d="M12 5v14M5 12h14" />
               </svg>
-              Add Testimonial
+              <span className="text-sm">Add Testimonial</span>
             </Button>
           </Link>
           <Link href="/admin/inquiries">
-            <Button variant="outline" className="w-full h-24 flex flex-col gap-2">
+            <Button variant="outline" className="w-full h-20 sm:h-24 flex flex-col gap-2 relative">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -166,11 +166,11 @@ export function Dashboard() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
-                className="h-6 w-6"
+                className="h-5 w-5 sm:h-6 sm:w-6"
               >
                 <path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
-              View Messages
+              <span className="text-sm">View Messages</span>
               {unreadCount > 0 && (
                 <span className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-bold rounded-full px-2 py-1">
                   {unreadCount}
@@ -179,7 +179,7 @@ export function Dashboard() {
             </Button>
           </Link>
           <Link href="/">
-            <Button variant="outline" className="w-full h-24 flex flex-col gap-2">
+            <Button variant="outline" className="w-full h-20 sm:h-24 flex flex-col gap-2 relative">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -188,11 +188,11 @@ export function Dashboard() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth="2"
-                className="h-6 w-6"
+                className="h-5 w-5 sm:h-6 sm:w-6"
               >
                 <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
-              View Website
+              <span className="text-sm">View Website</span>
             </Button>
           </Link>
         </CardContent>
