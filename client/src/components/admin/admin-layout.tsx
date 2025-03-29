@@ -118,7 +118,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-background">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Mobile Navigation Header */}
       <div className="md:hidden border-b border-border py-3 px-4 flex justify-between items-center sticky top-0 z-30 bg-background">
         <Link href="/" className="text-primary font-bold text-xl">
@@ -210,68 +210,70 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       )}
 
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
-        <div className="flex flex-col flex-grow border-r border-border pt-5 bg-card overflow-y-auto">
-          <div className="flex items-center justify-center flex-shrink-0 px-4">
-            <Link href="/" className="text-primary font-bold text-xl">
-              EventForge
-            </Link>
-          </div>
-          <div className="mt-8 flex-1 flex flex-col">
-            <nav className="flex-1 px-4 space-y-2">
-              {routes.map((route) => (
-                <Link 
-                  key={route.path} 
-                  href={route.path}
-                  className={cn(
-                    "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors relative",
-                    location === route.path
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-secondary"
-                  )}
-                >
-                  <div className="mr-3">{route.icon}</div>
-                  {route.name}
-                  {location === route.path && (
-                    <motion.div
-                      layoutId="sidebar-indicator"
-                      className="absolute left-0 w-1 h-6 bg-primary rounded-r-full"
-                    />
-                  )}
-                </Link>
-              ))}
-            </nav>
-          </div>
-          <div className="p-4 border-t border-border">
-            <Link 
-              href="/"
-              className="flex items-center space-x-3 px-3 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+      <div className="flex flex-1">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:block w-64 flex-shrink-0">
+          <div className="h-screen sticky top-0 flex flex-col border-r border-border pt-5 bg-card overflow-y-auto">
+            <div className="flex items-center justify-center flex-shrink-0 px-4">
+              <Link href="/" className="text-primary font-bold text-xl">
+                EventForge
+              </Link>
+            </div>
+            <div className="mt-8 flex-1 flex flex-col">
+              <nav className="flex-1 px-4 space-y-2">
+                {routes.map((route) => (
+                  <Link 
+                    key={route.path} 
+                    href={route.path}
+                    className={cn(
+                      "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors relative",
+                      location === route.path
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-secondary"
+                    )}
+                  >
+                    <div className="mr-3">{route.icon}</div>
+                    {route.name}
+                    {location === route.path && (
+                      <motion.div
+                        layoutId="sidebar-indicator"
+                        className="absolute left-0 w-1 h-6 bg-primary rounded-r-full"
+                      />
+                    )}
+                  </Link>
+                ))}
+              </nav>
+            </div>
+            <div className="p-4 border-t border-border">
+              <Link 
+                href="/"
+                className="flex items-center space-x-3 px-3 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 17l-5-5m0 0l5-5m-5 5h12"
-                />
-              </svg>
-              <span>Back to Website</span>
-            </Link>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 17l-5-5m0 0l5-5m-5 5h12"
+                  />
+                </svg>
+                <span>Back to Website</span>
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <main className="flex-1 md:ml-64">
-        <div className="py-6 px-4 sm:px-6 lg:px-8 min-h-screen">{children}</div>
-      </main>
+        {/* Main Content */}
+        <main className="flex-1">
+          <div className="py-6 px-4 sm:px-6 lg:px-8">{children}</div>
+        </main>
+      </div>
     </div>
   );
 }
