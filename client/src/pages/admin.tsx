@@ -17,15 +17,14 @@ const Admin = () => {
     }
   }, [location, setLocation]);
 
+  // A more flexible routing approach
   return (
     <AdminLayout>
-      <Switch>
-        <Route path="/admin" component={AdminDashboard} />
-        <Route path="/admin/portfolio" component={AdminPortfolio} />
-        <Route path="/admin/testimonials" component={AdminTestimonials} />
-        <Route path="/admin/inquiries" component={AdminInquiries} />
-        <Route component={AdminNotFound} />
-      </Switch>
+      {location === "/admin" && <AdminDashboard />}
+      {location === "/admin/portfolio" && <AdminPortfolio />}
+      {location === "/admin/testimonials" && <AdminTestimonials />}
+      {location === "/admin/inquiries" && <AdminInquiries />}
+      {!["/admin", "/admin/portfolio", "/admin/testimonials", "/admin/inquiries"].includes(location) && <AdminNotFound />}
     </AdminLayout>
   );
 };

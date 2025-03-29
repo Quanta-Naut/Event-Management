@@ -16,9 +16,9 @@ import { AnimatePresence } from "framer-motion";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/admin/:rest*" component={Admin} />
-      <Route component={NotFound} />
+      <Route path="/">{(params) => <Home />}</Route>
+      <Route path="/admin/*">{(params) => <Admin />}</Route>
+      <Route>{(params) => <NotFound />}</Route>
     </Switch>
   );
 }
