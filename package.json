@@ -109,6 +109,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "bufferutil",
+      "es5-ext",
       "esbuild"
     ]
   }
