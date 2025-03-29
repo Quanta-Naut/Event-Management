@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { motion, useInView, useAnimation } from "framer-motion";
+import { motion, useInView, useAnimation, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -27,6 +27,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { queryClient } from "@/lib/queryClient";
 import PortfolioItem from "@/components/portfolio/portfolio-item";
+import PortfolioModal from "@/components/portfolio/portfolio-modal";
 import TestimonialCard from "@/components/testimonials/testimonial-card";
 import BackgroundGradient from "@/components/animations/background-gradient";
 import type { PortfolioItem as PortfolioItemType, Testimonial } from "@shared/schema";
@@ -43,22 +44,18 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 const Home = () => {
   // Get context for portfolio modal
-  const [openPortfolioModal, setOpenPortfolioModal] = useState<(id: number) => void>(() => () => {});
+  const [portfolioModalOpen, setPortfolioModalOpen] = useState(false);
+  const [selectedPortfolioId, setSelectedPortfolioId] = useState<number | null>(null);
   
-  useEffect(() => {
-    const contextElement = document.getElementById('portfolio-modal-context');
-    if (contextElement) {
-      const openFnStr = contextElement.getAttribute('data-open');
-      if (openFnStr) {
-        try {
-          // eslint-disable-next-line no-new-func
-          setOpenPortfolioModal(() => (id: number) => new Function(openFnStr)(id));
-        } catch (e) {
-          console.error('Failed to parse portfolio modal open function', e);
-        }
-      }
-    }
-  }, []);
+  const openPortfolioModal = (id: number) => {
+    setSelectedPortfolioId(id);
+    setPortfolioModalOpen(true);
+  };
+  
+  const closePortfolioModal = () => {
+    setPortfolioModalOpen(false);
+    setTimeout(() => setSelectedPortfolioId(null), 300); // Clear after animation
+  };
 
   return (
     <>
@@ -67,6 +64,17 @@ const Home = () => {
       <ServicesSection />
       <TestimonialsSection />
       <ContactSection />
+      
+      {/* Portfolio Modal */}
+      <AnimatePresence>
+        {portfolioModalOpen && selectedPortfolioId !== null && (
+          <PortfolioModal
+            isOpen={portfolioModalOpen}
+            onClose={closePortfolioModal}
+            portfolioId={selectedPortfolioId}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 };
