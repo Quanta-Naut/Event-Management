@@ -149,39 +149,37 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                   key={route.path}
                   href={route.path}
                   onClick={() => setIsMobileMenuOpen(false)}
+                  className={cn(
+                    "flex items-center space-x-3 px-3 py-2 rounded-md transition-colors hover:bg-secondary",
+                    location === route.path
+                      ? "bg-secondary text-foreground"
+                      : "text-muted-foreground"
+                  )}
                 >
-                  <a
-                    className={cn(
-                      "flex items-center space-x-3 px-3 py-2 rounded-md transition-colors hover:bg-secondary",
-                      location === route.path
-                        ? "bg-secondary text-foreground"
-                        : "text-muted-foreground"
-                    )}
-                  >
-                    {route.icon}
-                    <span>{route.name}</span>
-                  </a>
+                  {route.icon}
+                  <span>{route.name}</span>
                 </Link>
               ))}
               <div className="pt-4 mt-4 border-t border-border">
-                <Link href="/">
-                  <a className="flex items-center space-x-3 px-3 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 17l-5-5m0 0l5-5m-5 5h12"
-                      />
-                    </svg>
-                    <span>Back to Website</span>
-                  </a>
+                <Link 
+                  href="/"
+                  className="flex items-center space-x-3 px-3 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 17l-5-5m0 0l5-5m-5 5h12"
+                    />
+                  </svg>
+                  <span>Back to Website</span>
                 </Link>
               </div>
             </nav>
@@ -200,47 +198,48 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           <div className="mt-8 flex-1 flex flex-col">
             <nav className="flex-1 px-4 space-y-2">
               {routes.map((route) => (
-                <Link key={route.path} href={route.path}>
-                  <a
-                    className={cn(
-                      "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                      location === route.path
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-secondary"
-                    )}
-                  >
-                    <div className="mr-3">{route.icon}</div>
-                    {route.name}
-                    {location === route.path && (
-                      <motion.div
-                        layoutId="sidebar-indicator"
-                        className="absolute left-0 w-1 h-6 bg-primary rounded-r-full"
-                      />
-                    )}
-                  </a>
+                <Link 
+                  key={route.path} 
+                  href={route.path}
+                  className={cn(
+                    "group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors relative",
+                    location === route.path
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-secondary"
+                  )}
+                >
+                  <div className="mr-3">{route.icon}</div>
+                  {route.name}
+                  {location === route.path && (
+                    <motion.div
+                      layoutId="sidebar-indicator"
+                      className="absolute left-0 w-1 h-6 bg-primary rounded-r-full"
+                    />
+                  )}
                 </Link>
               ))}
             </nav>
           </div>
           <div className="p-4 border-t border-border">
-            <Link href="/">
-              <a className="flex items-center space-x-3 px-3 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 17l-5-5m0 0l5-5m-5 5h12"
-                  />
-                </svg>
-                <span>Back to Website</span>
-              </a>
+            <Link 
+              href="/"
+              className="flex items-center space-x-3 px-3 py-2 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 17l-5-5m0 0l5-5m-5 5h12"
+                />
+              </svg>
+              <span>Back to Website</span>
             </Link>
           </div>
         </div>
