@@ -119,36 +119,33 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
-      {/* Mobile Sidebar Toggle */}
-      <div className="md:hidden p-4 border-b border-border flex items-center space-x-3 sticky top-0 z-40 bg-background">
-        <button 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 rounded-md bg-secondary text-foreground"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
-        </button>
-        <span className="text-lg font-medium">Admin Dashboard</span>
-      </div>
       
-      {/* Sidebar - Different versions for mobile and desktop */}
+      {/* Mobile Menu Button - Fixed Position */}
+      <button
+        onClick={() => setIsMobileMenuOpen(true)}
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-primary text-primary-foreground shadow-md"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-6 w-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
+      </button>
+      
       {/* Mobile Sidebar - overlays content when active */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 bg-background/80 backdrop-blur-sm pt-16">
+        <div className="md:hidden fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
           <div className="fixed inset-y-0 left-0 w-64 bg-card overflow-y-auto h-full border-r border-border p-4">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 pt-2">
               <Link href="/" className="text-primary font-bold text-xl">
                 EventForge
               </Link>
@@ -172,7 +169,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 </svg>
               </button>
             </div>
-            <nav className="space-y-2">
+            <nav className="space-y-3">
               {routes.map((route) => (
                 <Link
                   key={route.path}
