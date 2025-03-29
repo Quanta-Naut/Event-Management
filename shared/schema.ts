@@ -2,7 +2,7 @@ import { pgTable, text, serial, integer, boolean, jsonb, timestamp } from "drizz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Base user model
+// Base user model (kept from original)
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -19,7 +19,6 @@ export const portfolioItems = pgTable("portfolio_items", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   category: text("category").notNull(),
-  venue: text("venue"),
   imageUrl: text("image_url").notNull(),
   description: text("description").notNull(),
   overview: text("overview").notNull(),
@@ -69,10 +68,7 @@ export const insertContactSubmissionSchema = createInsertSchema(contactSubmissio
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
-// Custom extension with strongly typed 'role' field
-export type PortfolioItem = typeof portfolioItems.$inferSelect & {
-  role: string[] | Record<string, string>;
-};
+export type PortfolioItem = typeof portfolioItems.$inferSelect;
 export type InsertPortfolioItem = z.infer<typeof insertPortfolioItemSchema>;
 
 export type Testimonial = typeof testimonials.$inferSelect;

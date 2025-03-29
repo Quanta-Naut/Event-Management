@@ -1,53 +1,114 @@
-import { Express, Request, Response, NextFunction } from "express";
-import { createServer, Server } from "http";
+import type { Express, Request, Response, NextFunction } from "express";
+import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { requireAuth, setupAuth } from "./auth";
-import { insertContactSubmissionSchema, insertPortfolioItemSchema, insertTestimonialSchema } from "@shared/schema";
-import { ZodError } from "zod";
+import { z } from "zod";
+import { 
+  insertContactSubmissionSchema, 
+  insertPortfolioItemSchema, 
+  insertTestimonialSchema,
+  insertUserSchema
+} from "@shared/schema";
+import { login, register, requireAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup authentication
-  setupAuth(app);
-
-  // Middleware for parsing JSON
-  app.use((req, res, next) => {
-    if (req.is("application/json")) {
-      let data = "";
-      req.on("data", chunk => {
-        data += chunk;
-      });
-      req.on("end", () => {
-        if (data) {
-          try {
-            req.body = JSON.parse(data);
-          } catch (e) {
-            res.status(400).json({ error: "Invalid JSON" });
-            return;
-          }
+  // Base API route
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok" });
+  });
+  
+  // Authentication routes
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+      
+      const result = await login(username, password);
+      
+      if (!result) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+      
+      const { user, token } = result;
+      
+      res.json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username
         }
-        next();
       });
-    } else {
-      next();
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Login failed" });
     }
   });
-
-  // Middleware for admin routes protection
-  const protectAdminRoutes = (req: Request, res: Response, next: NextFunction) => {
-    // Check if user is authenticated and is an admin
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
+  
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const result = insertUserSchema.safeParse(req.body);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid user data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const { username, password } = result.data;
+      
+      const registerResult = await register(username, password);
+      
+      if (!registerResult) {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+      
+      const { user, token } = registerResult;
+      
+      res.status(201).json({
+        token,
+        user: {
+          id: user.id,
+          username: user.username
+        }
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Registration failed" });
     }
-    next();
-  };
+  });
+  
+  // Auth verification endpoint
+  app.get("/api/auth/verify", requireAuth, (req, res) => {
+    // If we get here, the token is valid and req.user is set by the requireAuth middleware
+    res.json({
+      user: {
+        id: (req as any).user.id,
+        username: (req as any).user.username
+      }
+    });
+  });
 
+  // Apply auth middleware to admin-only operations
+  const protectAdminRoutes = (req: Request, res: Response, next: NextFunction) => {
+    // Skip auth for GET endpoints since they're publicly accessible
+    if (req.method === 'GET') {
+      return next();
+    }
+    
+    // Apply requireAuth for all other methods (POST, PUT, PATCH, DELETE)
+    return requireAuth(req, res, next);
+  };
+  
   // Portfolio routes
-  app.get("/api/portfolio", async (req, res) => {
+  app.get("/api/portfolio", async (_req, res) => {
     try {
       const items = await storage.getPortfolioItems();
       res.json(items);
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to fetch portfolio items" });
     }
   });
 
@@ -55,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" });
+        return res.status(400).json({ message: "Invalid ID format" });
       }
       
       const item = await storage.getPortfolioItem(id);
@@ -65,43 +126,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(item);
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to fetch portfolio item" });
     }
   });
 
   app.post("/api/portfolio", requireAuth, async (req, res) => {
     try {
-      const validatedData = insertPortfolioItemSchema.parse(req.body);
-      const item = await storage.createPortfolioItem(validatedData);
-      res.status(201).json(item);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      const result = insertPortfolioItemSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid portfolio item data", 
+          errors: result.error.errors 
+        });
       }
-      res.status(500).json({ message: "Server error" });
+      
+      const newItem = await storage.createPortfolioItem(result.data);
+      res.status(201).json(newItem);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create portfolio item" });
     }
   });
 
-  app.patch("/api/portfolio/:id", requireAuth, async (req, res) => {
+  app.put("/api/portfolio/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" });
+        return res.status(400).json({ message: "Invalid ID format" });
       }
       
-      const validatedData = insertPortfolioItemSchema.partial().parse(req.body);
-      const item = await storage.updatePortfolioItem(id, validatedData);
+      const result = insertPortfolioItemSchema.partial().safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid portfolio item data", 
+          errors: result.error.errors 
+        });
+      }
       
-      if (!item) {
+      const updatedItem = await storage.updatePortfolioItem(id, result.data);
+      if (!updatedItem) {
         return res.status(404).json({ message: "Portfolio item not found" });
       }
       
-      res.json(item);
+      res.json(updatedItem);
     } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to update portfolio item" });
     }
   });
 
@@ -109,63 +177,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" });
+        return res.status(400).json({ message: "Invalid ID format" });
       }
       
-      const success = await storage.deletePortfolioItem(id);
-      if (!success) {
-        return res.status(404).json({ message: "Portfolio item not found" });
-      }
-      
+      // Even if item is not found, we return 204 as the end result is the same
+      await storage.deletePortfolioItem(id);
       res.status(204).end();
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to delete portfolio item" });
     }
   });
 
   // Testimonial routes
-  app.get("/api/testimonials", async (req, res) => {
+  app.get("/api/testimonials", async (_req, res) => {
     try {
       const testimonials = await storage.getTestimonials();
       res.json(testimonials);
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to fetch testimonials" });
     }
   });
 
   app.post("/api/testimonials", requireAuth, async (req, res) => {
     try {
-      const validatedData = insertTestimonialSchema.parse(req.body);
-      const testimonial = await storage.createTestimonial(validatedData);
-      res.status(201).json(testimonial);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+      const result = insertTestimonialSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid testimonial data", 
+          errors: result.error.errors 
+        });
       }
-      res.status(500).json({ message: "Server error" });
+      
+      const newTestimonial = await storage.createTestimonial(result.data);
+      res.status(201).json(newTestimonial);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create testimonial" });
     }
   });
 
-  app.patch("/api/testimonials/:id", requireAuth, async (req, res) => {
+  app.put("/api/testimonials/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" });
+        return res.status(400).json({ message: "Invalid ID format" });
       }
       
-      const validatedData = insertTestimonialSchema.partial().parse(req.body);
-      const testimonial = await storage.updateTestimonial(id, validatedData);
+      const result = insertTestimonialSchema.partial().safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid testimonial data", 
+          errors: result.error.errors 
+        });
+      }
       
-      if (!testimonial) {
+      const updatedTestimonial = await storage.updateTestimonial(id, result.data);
+      if (!updatedTestimonial) {
         return res.status(404).json({ message: "Testimonial not found" });
       }
       
-      res.json(testimonial);
+      res.json(updatedTestimonial);
     } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to update testimonial" });
     }
   });
 
@@ -173,58 +245,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" });
+        return res.status(400).json({ message: "Invalid ID format" });
       }
       
-      const success = await storage.deleteTestimonial(id);
-      if (!success) {
-        return res.status(404).json({ message: "Testimonial not found" });
-      }
-      
+      // Even if item is not found, we return 204 as the end result is the same
+      await storage.deleteTestimonial(id);
       res.status(204).end();
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to delete testimonial" });
     }
   });
 
   // Contact submission routes
-  app.post("/api/contact", async (req, res) => {
-    try {
-      const validatedData = insertContactSubmissionSchema.parse(req.body);
-      const submission = await storage.createContactSubmission(validatedData);
-      res.status(201).json(submission);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
-      }
-      res.status(500).json({ message: "Server error" });
-    }
-  });
-
-  app.get("/api/contact", requireAuth, async (req, res) => {
+  app.get("/api/contact", requireAuth, async (_req, res) => {
     try {
       const submissions = await storage.getContactSubmissions();
       res.json(submissions);
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to fetch contact submissions" });
     }
   });
 
-  app.get("/api/contact/:id", requireAuth, async (req, res) => {
+  app.post("/api/contact", async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" });
+      const result = insertContactSubmissionSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid contact submission data", 
+          errors: result.error.errors 
+        });
       }
       
-      const submission = await storage.getContactSubmission(id);
-      if (!submission) {
-        return res.status(404).json({ message: "Contact submission not found" });
-      }
-      
-      res.json(submission);
+      const newSubmission = await storage.createContactSubmission(result.data);
+      res.status(201).json(newSubmission);
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to create contact submission" });
     }
   });
 
@@ -232,17 +287,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" });
+        return res.status(400).json({ message: "Invalid ID format" });
       }
       
-      const submission = await storage.markContactSubmissionAsRead(id);
-      if (!submission) {
+      const updatedSubmission = await storage.markContactSubmissionAsRead(id);
+      if (!updatedSubmission) {
         return res.status(404).json({ message: "Contact submission not found" });
       }
       
-      res.json(submission);
+      res.json(updatedSubmission);
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to mark contact submission as read" });
     }
   });
 
@@ -250,35 +305,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" });
+        return res.status(400).json({ message: "Invalid ID format" });
       }
       
-      const success = await storage.deleteContactSubmission(id);
-      if (!success) {
-        return res.status(404).json({ message: "Contact submission not found" });
-      }
-      
+      // Even if item is not found, we return 204 as the end result is the same
+      await storage.deleteContactSubmission(id);
       res.status(204).end();
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to delete contact submission" });
     }
   });
 
-  // Admin routes
-  app.get("/api/users", requireAuth, protectAdminRoutes, async (req, res) => {
+  // Admin user management routes
+  app.get("/api/admin/users", requireAuth, async (_req, res) => {
     try {
       const users = await storage.getUsers();
-      res.json(users);
+      // Do not send passwords to the client
+      const sanitizedUsers = users.map(user => ({
+        id: user.id,
+        username: user.username
+      }));
+      res.json(sanitizedUsers);
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to fetch admin users" });
     }
   });
 
-  app.delete("/api/users/:id", requireAuth, protectAdminRoutes, async (req, res) => {
+  app.post("/api/admin/users", requireAuth, async (req, res) => {
+    try {
+      const result = insertUserSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ 
+          message: "Invalid user data", 
+          errors: result.error.errors 
+        });
+      }
+      
+      const { username, password } = result.data;
+      const registerResult = await register(username, password);
+      
+      if (!registerResult) {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+      
+      const { user } = registerResult;
+      
+      res.status(201).json({
+        id: user.id,
+        username: user.username
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create admin user" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", requireAuth, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
-        return res.status(400).json({ message: "Invalid ID" });
+        return res.status(400).json({ message: "Invalid ID format" });
+      }
+      
+      // Don't allow deleting own account
+      if ((req as any).user.id === id) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
       }
       
       const success = await storage.deleteUser(id);
@@ -288,12 +378,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(204).end();
     } catch (error) {
-      res.status(500).json({ message: "Server error" });
+      res.status(500).json({ message: "Failed to delete admin user" });
     }
   });
 
-  // Create HTTP server
   const httpServer = createServer(app);
-  
+
   return httpServer;
 }

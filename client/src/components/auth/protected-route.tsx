@@ -1,6 +1,7 @@
-import { useAuth } from "@/hooks/use-auth";
-import { Loader2 } from "lucide-react";
-import { Redirect, Route } from "wouter";
+import { useEffect } from 'react';
+import { Redirect, Route } from 'wouter';
+import { useAuth } from '@/lib/hooks/use-auth';
+import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   component: React.ComponentType;
@@ -8,29 +9,26 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ component: Component, path }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, token, verifyToken } = useAuth();
 
-  if (isLoading) {
-    return (
-      <Route path={path}>
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-border" />
-        </div>
-      </Route>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Route path={path}>
-        <Redirect to="/auth" />
-      </Route>
-    );
-  }
-
+  useEffect(() => {
+    // If we have a token but aren't authenticated yet, verify the token
+    if (token && !isAuthenticated && !isLoading) {
+      verifyToken();
+    }
+  }, [token, isAuthenticated, isLoading, verifyToken]);
+  
   return (
     <Route path={path}>
-      <Component />
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : isAuthenticated ? (
+        <Component />
+      ) : (
+        <Redirect to="/auth" />
+      )}
     </Route>
   );
 }

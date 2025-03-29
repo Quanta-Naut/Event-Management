@@ -11,10 +11,10 @@ import Footer from "@/components/layout/footer";
 import MobileMenu from "@/components/layout/mobile-menu";
 import CommandBar from "@/components/layout/command-bar";
 import PortfolioModal from "@/components/portfolio/portfolio-modal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import { ProtectedRoute } from "@/lib/protected-route";
-import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/components/auth/protected-route";
+import { AuthProvider } from "@/lib/hooks/use-auth";
 
 function Router() {
   return (
