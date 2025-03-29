@@ -10,6 +10,9 @@ interface AdminLayoutProps {
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [location] = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Debugging the location in admin layout
+  console.log("Admin layout location:", location);
 
   const routes = [
     {

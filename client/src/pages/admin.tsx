@@ -10,31 +10,48 @@ import NotFound from "@/pages/not-found";
 const Admin = () => {
   const [location, setLocation] = useLocation();
   
-  // Redirect to main admin page if on /admin/
+  // Make sure the dashboard is displayed for root admin page
   useEffect(() => {
-    if (location === "/admin/" || location === "/admin") {
+    console.log("Admin page effect running, location:", location);
+    // Only redirect if we're on /admin/ with trailing slash
+    if (location === "/admin/") {
       setLocation("/admin");
     }
   }, [location, setLocation]);
 
-  // A more flexible routing approach
+  // Debugging the current location
+  console.log("Current location in admin:", location);
+  
+  // Determine which component to show based on path
+  let currentView;
+  if (location === "/admin" || location === "/admin/") {
+    currentView = <AdminDashboard />;
+  } else if (location === "/admin/portfolio") {
+    currentView = <AdminPortfolio />;
+  } else if (location === "/admin/testimonials") {
+    currentView = <AdminTestimonials />;
+  } else if (location === "/admin/inquiries") {
+    currentView = <AdminInquiries />;
+  } else {
+    currentView = <AdminNotFound />;
+  }
+  
   return (
     <AdminLayout>
-      {location === "/admin" && <AdminDashboard />}
-      {location === "/admin/portfolio" && <AdminPortfolio />}
-      {location === "/admin/testimonials" && <AdminTestimonials />}
-      {location === "/admin/inquiries" && <AdminInquiries />}
-      {!["/admin", "/admin/portfolio", "/admin/testimonials", "/admin/inquiries"].includes(location) && <AdminNotFound />}
+      {currentView}
     </AdminLayout>
   );
 };
 
-const AdminDashboard = () => (
-  <div>
-    <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-    <Dashboard />
-  </div>
-);
+const AdminDashboard = () => {
+  console.log("AdminDashboard component is rendering");
+  return (
+    <div>
+      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <Dashboard />
+    </div>
+  );
+};
 
 const AdminPortfolio = () => (
   <div>

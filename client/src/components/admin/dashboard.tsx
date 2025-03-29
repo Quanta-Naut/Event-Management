@@ -5,9 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
 export function Dashboard() {
+  console.log("Dashboard component is rendering");
+  
   const { data: portfolioItems } = usePortfolioItems();
   const { data: testimonials } = useTestimonials();
   const { data: contactSubmissions } = useContactSubmissions();
+  
+  console.log("Dashboard data:", { 
+    portfolioItems: portfolioItems?.length || 0, 
+    testimonials: testimonials?.length || 0,
+    contactSubmissions: contactSubmissions?.length || 0
+  });
 
   // Count unread messages
   const unreadCount = contactSubmissions?.filter((submission: any) => !submission.read).length || 0;

@@ -17,6 +17,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/">{(params) => <Home />}</Route>
+      {/* Change exact admin path to match correctly */}
+      <Route path="/admin">{(params) => <Admin />}</Route>
       <Route path="/admin/*">{(params) => <Admin />}</Route>
       <Route>{(params) => <NotFound />}</Route>
     </Switch>
