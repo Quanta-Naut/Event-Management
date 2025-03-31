@@ -6,11 +6,14 @@ const Footer = () => {
       <div className="container mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div>
-            <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400 mb-4">
-              EventForge
+            <div className="flex items-center mb-4">
+              <img src="/asiri/logo.svg" alt="Asiri Events" className="h-12 w-auto mr-3" />
+            </div>
+            <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400 mb-2">
+              Asiri
             </h3>
             <p className="text-muted-foreground mb-4">
-              Crafting unforgettable experiences through innovative event management solutions.
+              "Give wings to ur dreams" - One stop for all events to enhance your best moments with us.
             </p>
             <div className="flex space-x-4">
               <SocialLink href="#" icon={<FacebookIcon />} label="Facebook" />
@@ -26,8 +29,8 @@ const Footer = () => {
               <FooterLink href="#" label="Corporate Events" />
               <FooterLink href="#" label="Weddings" />
               <FooterLink href="#" label="Social Gatherings" />
-              <FooterLink href="#" label="Festivals & Concerts" />
-              <FooterLink href="#" label="Non-Profit Events" />
+              <FooterLink href="#" label="Concerts & Performances" />
+              <FooterLink href="#" label="Event Management" />
             </ul>
           </div>
 
@@ -37,29 +40,42 @@ const Footer = () => {
               <FooterLink href="#" label="About Us" />
               <FooterLink href="/#portfolio" label="Portfolio" />
               <FooterLink href="/#testimonials" label="Testimonials" />
-              <FooterLink href="#" label="Blog" />
+              <FooterLink href="/#services" label="Our Services" />
               <FooterLink href="/#contact" label="Contact" />
             </ul>
           </div>
 
           <div>
             <h4 className="text-lg font-semibold mb-4">Contact Us</h4>
-            <ul className="space-y-2">
+            <ul className="space-y-3">
               <li className="flex items-start">
                 <LocationIcon className="h-5 w-5 mr-2 text-primary mt-0.5" />
                 <span className="text-muted-foreground">
-                  123 Event Avenue, Suite 200
-                  <br />
-                  New York, NY 10001
+                  259, 6th cross, Vikramaditya road, <br />
+                  Lakshmipura, Gavipura, <br />
+                  Bengaluru, Karnataka 560019
                 </span>
               </li>
-              <li className="flex items-center">
-                <PhoneIcon className="h-5 w-5 mr-2 text-primary" />
-                <span className="text-muted-foreground">(123) 456-7890</span>
+              
+              <li className="flex flex-col">
+                <div className="flex items-center mb-1">
+                  <PhoneIcon className="h-5 w-5 mr-2 text-primary" />
+                  <span className="text-muted-foreground font-medium">Latha Bhaskar</span>
+                </div>
+                <span className="text-muted-foreground ml-7">+91 9663627103</span>
               </li>
+              
+              <li className="flex flex-col">
+                <div className="flex items-center mb-1">
+                  <PhoneIcon className="h-5 w-5 mr-2 text-primary" />
+                  <span className="text-muted-foreground font-medium">Meher Somesh</span>
+                </div>
+                <span className="text-muted-foreground ml-7">+91 9538225063</span>
+              </li>
+              
               <li className="flex items-center">
                 <EmailIcon className="h-5 w-5 mr-2 text-primary" />
-                <span className="text-muted-foreground">info@eventforge.com</span>
+                <span className="text-muted-foreground">contact@asirievents.com</span>
               </li>
             </ul>
           </div>
@@ -67,17 +83,14 @@ const Footer = () => {
 
         <div className="border-t border-border mt-12 pt-6 flex flex-col md:flex-row justify-between items-center">
           <p className="text-muted-foreground text-sm">
-            © {new Date().getFullYear()} EventForge. All rights reserved.
+            © {new Date().getFullYear()} Asiri Events. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
+            <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">
               Privacy Policy
             </a>
-            <a href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
+            <a href="#" className="text-muted-foreground hover:text-primary text-sm transition-colors">
               Terms of Service
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-foreground text-sm transition-colors">
-              Cookie Policy
             </a>
           </div>
         </div>

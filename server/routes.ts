@@ -9,11 +9,45 @@ import {
   insertUserSchema
 } from "@shared/schema";
 import { login, register, requireAuth } from "./auth";
+import { hasDbError } from "./db";
+
+// Helper function to handle database-related errors
+const handleApiError = (res: Response, error: any, defaultMessage: string) => {
+  console.error(`API Error: ${defaultMessage}`, error);
+  
+  // Check for specific error types
+  if (error?.code === 'ECONNREFUSED' || error?.message?.includes('database') || 
+      error?.message?.includes('DATABASE_URL') || hasDbError) {
+    return res.status(503).json({ 
+      message: "Database connection error. Please try again later.",
+      error: "database_unavailable"
+    });
+  }
+  
+  if (error?.code === '23505') { // PostgreSQL unique violation
+    return res.status(409).json({ 
+      message: "This record already exists.",
+      error: "duplicate_record" 
+    });
+  }
+  
+  return res.status(500).json({ 
+    message: defaultMessage,
+    error: "internal_server_error"
+  });
+};
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Base API route
   app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok" });
+    const health = {
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      database: hasDbError ? "unavailable" : "connected",
+      environment: process.env.NODE_ENV || 'development'
+    };
+    
+    res.json(health);
   });
   
   // Authentication routes
@@ -41,8 +75,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
     } catch (error) {
-      console.error("Login error:", error);
-      res.status(500).json({ message: "Login failed" });
+      handleApiError(res, error, "Login failed");
     }
   });
   
@@ -262,24 +295,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const submissions = await storage.getContactSubmissions();
       res.json(submissions);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch contact submissions" });
+      handleApiError(res, error, "Failed to fetch contact submissions");
     }
   });
 
   app.post("/api/contact", async (req, res) => {
     try {
+      // First check if database is available
+      if (hasDbError) {
+        return res.status(503).json({
+          message: "Our database is currently unavailable. Please try again later or contact us directly by phone.",
+          error: "database_unavailable"
+        });
+      }
+      
       const result = insertContactSubmissionSchema.safeParse(req.body);
       if (!result.success) {
         return res.status(400).json({ 
-          message: "Invalid contact submission data", 
-          errors: result.error.errors 
+          message: "Please check the form for errors and try again.", 
+          errors: result.error.format(),
+          error: "validation_error"
         });
       }
       
       const newSubmission = await storage.createContactSubmission(result.data);
-      res.status(201).json(newSubmission);
+      
+      // Return a meaningful success response
+      res.status(201).json({
+        message: "Your message has been received. We'll get back to you soon!",
+        submission: newSubmission
+      });
     } catch (error) {
-      res.status(500).json({ message: "Failed to create contact submission" });
+      handleApiError(res, error, "Failed to submit your message. Please try again later.");
     }
   });
 
@@ -297,7 +344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(updatedSubmission);
     } catch (error) {
-      res.status(500).json({ message: "Failed to mark contact submission as read" });
+      handleApiError(res, error, "Failed to mark contact submission as read");
     }
   });
 
@@ -312,7 +359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.deleteContactSubmission(id);
       res.status(204).end();
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete contact submission" });
+      handleApiError(res, error, "Failed to delete contact submission");
     }
   });
 

@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { motion, useInView, useAnimation } from "framer-motion";
+import { motion, useInView, useAnimation, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -30,12 +30,14 @@ import PortfolioItem from "@/components/portfolio/portfolio-item";
 import TestimonialCard from "@/components/testimonials/testimonial-card";
 import BackgroundGradient from "@/components/animations/background-gradient";
 import type { PortfolioItem as PortfolioItemType, Testimonial } from "@shared/schema";
+import { smoothScrollToElement } from "@/lib/utils";
 
-// Extend the contact form schema with additional validation
+// Extend the contact form schema with additional validation for Indian phone numbers
 const contactFormSchema = insertContactSubmissionSchema.extend({
   email: z.string().email("Please enter a valid email address"),
-  phone: z.string().optional().refine(val => !val || /^[0-9\+\-\(\)]{7,}$/.test(val), {
-    message: "Please enter a valid phone number",
+  // Updated regex for Indian phone numbers (supports formats like +91 XXXXXXXXXX, 0XXXXXXXXXX, etc.)
+  phone: z.string().optional().refine(val => !val || /^(?:\+91|0)?[6789]\d{9}$/.test(val), {
+    message: "Please enter a valid Indian phone number",
   }),
 });
 
@@ -103,6 +105,14 @@ const HeroSection = () => {
     },
   };
 
+  // Function to scroll to contact section with enhanced animation
+  const scrollToContact = () => {
+    smoothScrollToElement("contact", { 
+      offsetPx: 80,  
+      duration: 1200 
+    });
+  };
+
   return (
     <section className="relative min-h-[90vh] flex items-center">
       <BackgroundGradient />
@@ -136,18 +146,14 @@ const HeroSection = () => {
             <Button 
               size="lg" 
               className="shadow-lg shadow-primary/20 bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90"
+              onClick={scrollToContact}
             >
               Book an Event
             </Button>
             <Button 
               size="lg" 
               variant="outline"
-              onClick={() => {
-                const element = document.getElementById("portfolio");
-                if (element) {
-                  element.scrollIntoView({ behavior: "smooth" });
-                }
-              }}
+              onClick={() => smoothScrollToElement("portfolio", { duration: 1200 })}
             >
               Explore Portfolio
             </Button>
@@ -257,6 +263,9 @@ const ServicesSection = () => {
   const controls = useAnimation();
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
+  
+  // Track which cards are being hovered
+  const [hoveredCardIndex, setHoveredCardIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (isInView) {
@@ -292,6 +301,7 @@ const ServicesSection = () => {
       ),
       title: "Corporate Events",
       description: "From product launches to conferences, we create professional events that strengthen your brand.",
+      bgImage: "asiri/other/landscapes/other-event-18.jpg"
     },
     {
       icon: (
@@ -301,6 +311,7 @@ const ServicesSection = () => {
       ),
       title: "Social Gatherings",
       description: "Elevate birthdays, anniversaries and special celebrations with our creative planning.",
+      bgImage: "/asiri/concerts/concert-event-1.jpg"
     },
     {
       icon: (
@@ -310,6 +321,7 @@ const ServicesSection = () => {
       ),
       title: "Weddings",
       description: "We transform your dream wedding into reality with meticulous planning and execution.",
+      bgImage: "/asiri/weddings/wedding-event-1.jpg"
     },
     {
       icon: (
@@ -319,6 +331,7 @@ const ServicesSection = () => {
       ),
       title: "Festivals & Concerts",
       description: "Complete logistics and production management for large-scale entertainment events.",
+      bgImage: "/asiri/concerts/concert-event-1.jpg"
     },
     {
       icon: (
@@ -328,6 +341,7 @@ const ServicesSection = () => {
       ),
       title: "Non-Profit Events",
       description: "Strategic fundraisers and charity events that maximize impact and donations.",
+      bgImage: "/asiri/other/portraits/other-event-31.jpg"
     },
     {
       icon: (
@@ -337,6 +351,7 @@ const ServicesSection = () => {
       ),
       title: "Virtual Events",
       description: "Engaging digital experiences with seamless technology integration and production.",
+      bgImage: "/asiri/other/miscellaneous/other-event-5.jpg"
     },
   ];
 
@@ -365,18 +380,47 @@ const ServicesSection = () => {
           {services.map((service, index) => (
             <motion.div
               key={index}
-              className="bg-card p-6 rounded-xl"
+              className="relative bg-card rounded-xl overflow-hidden h-64 shadow-md border border-primary/40"
               variants={itemVariants}
-              whileHover={{ y: -4 }}
+              animate={{ 
+                y: hoveredCardIndex === index ? -4 : 0 
+              }}
               transition={{ duration: 0.3 }}
+              onHoverStart={() => setHoveredCardIndex(index)}
+              onHoverEnd={() => setHoveredCardIndex(null)}
             >
-              <div className="w-12 h-12 mb-4 rounded-lg bg-primary/20 flex items-center justify-center">
-                {service.icon}
+              {/* Background Image with subtle blur */}
+              <div 
+                className="absolute inset-0 z-0" 
+                style={{
+                  backgroundImage: `url(${service.bgImage})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  filter: 'blur(3px) brightness(0.8)',
+                }}
+              ></div>
+              
+              {/* Gradient overlay for better readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent z-0"></div>
+              
+              {/* Content */}
+              <div className="relative z-10 p-6 h-full flex flex-col">
+                <div className="w-12 h-12 mb-4 rounded-lg bg-primary/30 backdrop-blur-sm flex items-center justify-center">
+                  {service.icon}
+                </div>
+                <h3 className="text-xl font-semibold mb-2 text-white">{service.title}</h3>
+                <p className="text-white/80">
+                  {service.description}
+                </p>
+                <div className="mt-auto">
+                  <div className="inline-flex items-center text-primary hover:text-primary/80 transition-colors cursor-pointer pt-2">
+                    <span className="text-sm font-medium">Learn more</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-2">{service.title}</h3>
-              <p className="text-muted-foreground">
-                {service.description}
-              </p>
             </motion.div>
           ))}
         </motion.div>
@@ -529,6 +573,9 @@ const ContactSection = () => {
   const formRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(formRef, { once: true, amount: 0.3 });
   const controls = useAnimation();
+  
+  // State to track successful submission for animation
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   // Set up form
   const form = useForm<ContactFormValues>({
@@ -548,26 +595,60 @@ const ContactSection = () => {
       return apiRequest("POST", "/api/contact", values);
     },
     onSuccess: async () => {
+      // Show success animation
+      setFormSubmitted(true);
+      
+      // Show success toast
       toast({
-        title: "Message sent",
+        title: "Message sent successfully!",
         description: "Thank you for your message. We'll get back to you soon.",
       });
-      form.reset();
+      
+      // Reset form after a delay to let animation complete
+      setTimeout(() => {
+        form.reset();
+        setFormSubmitted(false);
+      }, 2000);
+      
       // Invalidate queries if needed
       await queryClient.invalidateQueries({ queryKey: ['/api/contact'] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      const errorMessage = error.response?.data?.message || 
+                          "Failed to send your message. Please try again later.";
+      
       toast({
         title: "Error",
-        description: "Failed to send your message. Please try again later.",
+        description: errorMessage,
         variant: "destructive",
       });
       console.error("Contact form error:", error);
+      
+      // Check if this is a database connection issue
+      if (errorMessage.includes("DATABASE_URL") || error.message?.includes("database")) {
+        toast({
+          title: "Database Connection Issue",
+          description: "Our database is currently experiencing issues. Your information was not saved. Please try again later or contact us directly by phone.",
+          variant: "destructive",
+          duration: 7000,
+        });
+      }
     },
   });
 
   const onSubmit = (values: ContactFormValues) => {
-    mutation.mutate(values);
+    // Display loading toast to give immediate feedback
+    const loadingToast = toast({
+      title: "Sending message...",
+      description: "Please wait while we process your submission.",
+    });
+
+    mutation.mutate(values, {
+      onSettled: () => {
+        // Dismiss loading toast when the request completes (success or error)
+        loadingToast.dismiss();
+      }
+    });
   };
 
   useEffect(() => {
@@ -584,6 +665,21 @@ const ContactSection = () => {
         duration: 0.5,
       },
     },
+  };
+
+  // Success animation variants
+  const successVariants = {
+    initial: { scale: 0.8, opacity: 0 },
+    animate: { 
+      scale: 1, 
+      opacity: 1,
+      transition: { duration: 0.5 } 
+    },
+    exit: { 
+      scale: 1.2, 
+      opacity: 0,
+      transition: { duration: 0.5 } 
+    }
   };
 
   return (
@@ -604,11 +700,55 @@ const ContactSection = () => {
 
           <motion.div
             ref={formRef}
-            className="bg-card rounded-xl p-6 md:p-8 shadow-xl"
+            className="bg-card rounded-xl p-6 md:p-8 shadow-xl relative overflow-hidden"
             variants={containerVariants}
             initial="hidden"
             animate={controls}
           >
+            <AnimatePresence>
+              {formSubmitted && (
+                <motion.div
+                  className="absolute inset-0 bg-primary/10 backdrop-blur-sm flex flex-col items-center justify-center z-10"
+                  variants={successVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                >
+                  <motion.div 
+                    className="bg-primary text-primary-foreground h-20 w-20 rounded-full flex items-center justify-center mb-4"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ 
+                      type: "spring", 
+                      stiffness: 260, 
+                      damping: 20, 
+                      delay: 0.1 
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </motion.div>
+                  <motion.p 
+                    className="text-xl font-bold"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    Message Sent!
+                  </motion.p>
+                  <motion.p 
+                    className="text-muted-foreground"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    We'll get back to you shortly
+                  </motion.p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+            
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -622,7 +762,7 @@ const ContactSection = () => {
                           <Input 
                             placeholder="Your name" 
                             {...field} 
-                            disabled={mutation.isPending}
+                            disabled={mutation.isPending || formSubmitted}
                           />
                         </FormControl>
                         <FormMessage />
@@ -641,7 +781,7 @@ const ContactSection = () => {
                             placeholder="your.email@example.com" 
                             type="email"
                             {...field} 
-                            disabled={mutation.isPending}
+                            disabled={mutation.isPending || formSubmitted}
                           />
                         </FormControl>
                         <FormMessage />
@@ -657,12 +797,35 @@ const ContactSection = () => {
                     <FormItem>
                       <FormLabel>Phone</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="(123) 456-7890" 
-                          type="tel"
-                          {...field} 
-                          disabled={mutation.isPending}
-                        />
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <span className="text-muted-foreground">+91</span>
+                          </div>
+                          <Input 
+                            placeholder=""
+                            type="tel"
+                            className="pl-12"
+                            {...field}
+                            onChange={(e) => {
+                              // Allow only numbers and limit to 10 digits (for Indian mobile numbers)
+                              const value = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                              field.onChange(value ? `+91${value}` : '');
+                              
+                              // Update input field to show only numbers (without +91)
+                              e.target.value = value;
+                            }}
+                            onBlur={(e) => {
+                              field.onBlur();
+                              // Format properly when losing focus
+                              if (field.value && !field.value.startsWith('+91')) {
+                                field.onChange(`+91${field.value}`);
+                              }
+                            }}
+                            // Display value without prefix in the input
+                            value={field.value ? field.value.replace('+91', '') : ''}
+                            disabled={mutation.isPending || formSubmitted}
+                          />
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -678,7 +841,7 @@ const ContactSection = () => {
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
-                        disabled={mutation.isPending}
+                        disabled={mutation.isPending || formSubmitted}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -710,7 +873,7 @@ const ContactSection = () => {
                           placeholder="Tell us about your event, including date, location, estimated guest count, and any special requirements."
                           className="min-h-[120px]"
                           {...field} 
-                          disabled={mutation.isPending}
+                          disabled={mutation.isPending || formSubmitted}
                         />
                       </FormControl>
                       <FormMessage />
@@ -721,9 +884,17 @@ const ContactSection = () => {
                 <Button 
                   type="submit" 
                   className="w-full shadow-lg shadow-primary/20 bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90"
-                  disabled={mutation.isPending}
+                  disabled={mutation.isPending || formSubmitted}
                 >
-                  {mutation.isPending ? "Sending..." : "Send Message"}
+                  {mutation.isPending ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending...
+                    </span>
+                  ) : "Send Message"}
                 </Button>
               </form>
             </Form>

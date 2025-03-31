@@ -1,6 +1,32 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import * as dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
+
+// Validate required environment variables
+const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+if (missingEnvVars.length > 0) {
+  const errorMessage = `Missing required environment variables: ${missingEnvVars.join(', ')}`;
+  console.error('\x1b[31m%s\x1b[0m', '⚠️ ERROR: ' + errorMessage);
+  
+  // Provide helpful message for DATABASE_URL specifically
+  if (missingEnvVars.includes('DATABASE_URL')) {
+    console.error('\x1b[33m%s\x1b[0m', 
+      '\nTo fix DATABASE_URL, add it to your .env file or set it as an environment variable.\n' +
+      'Example .env entry: DATABASE_URL=postgresql://username:password@localhost:5432/dbname\n' +
+      'You can also use a Docker container: docker run --name event-db -e POSTGRES_PASSWORD=password -e POSTGRES_USER=admin -e POSTGRES_DB=eventforge -p 5432:5432 -d postgres\n'
+    );
+  }
+
+  // Continue execution, but with warnings - the application will use fallbacks where possible
+  // but DB-dependent features will fail gracefully
+  console.warn('\x1b[33m%s\x1b[0m', 'Warning: Application starting with missing environment variables. Some features may not work correctly.');
+}
 
 const app = express();
 app.use(express.json());
@@ -41,10 +67,19 @@ app.use((req, res, next) => {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    let message = err.message || "Internal Server Error";
+
+    // Enhance database-related error messages
+    if (message.includes('DATABASE_URL') || (err.code && ['ECONNREFUSED', '28P01', '3D000'].includes(err.code))) {
+      message = "Database connection error. Please try again later or contact support.";
+      console.error('Database Error:', err);
+    }
 
     res.status(status).json({ message });
-    throw err;
+    
+    if (app.get("env") === "development") {
+      console.error(err);
+    }
   });
 
   // importantly only setup vite in development and after

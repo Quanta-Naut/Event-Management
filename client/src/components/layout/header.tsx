@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { smoothScrollToElement } from "@/lib/utils";
 
 interface HeaderProps {
   toggleMobileMenu: () => void;
@@ -35,6 +36,14 @@ const Header = ({ toggleMobileMenu, toggleCommandBar }: HeaderProps) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleCommandBar]);
 
+  // Function to scroll to contact section
+  const scrollToContact = () => {
+    const contactSection = document.getElementById("contact");
+    if (contactSection) {
+      contactSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <motion.header
       className={`sticky top-0 z-50 border-b transition-colors duration-200 backdrop-blur-lg ${
@@ -46,12 +55,12 @@ const Header = ({ toggleMobileMenu, toggleCommandBar }: HeaderProps) => {
       animate={{ y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="container mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
+      <div className="container mx-auto px-4 md:px-6 py-2 flex justify-between items-center">
         <div className="flex items-center">
           <Link href="/" className="mr-8">
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">
-              EventForge
-            </h1>
+            <div className="flex items-center">
+              <img src="/asiri/logo.svg" alt="Asiri Events" className="h-12 w-auto" />
+            </div>
           </Link>
           <nav className="hidden md:flex space-x-8">
             <ScrollLink
@@ -86,7 +95,10 @@ const Header = ({ toggleMobileMenu, toggleCommandBar }: HeaderProps) => {
             <span>Search</span>
             <kbd className="ml-3 px-1.5 py-0.5 bg-muted rounded text-xs">⌘K</kbd>
           </Button>
-          <Button className="shadow-lg shadow-primary/20 bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90">
+          <Button 
+            className="shadow-lg shadow-primary/20 bg-gradient-to-r from-primary to-purple-500 hover:from-primary/90 hover:to-purple-500/90"
+            onClick={scrollToContact}
+          >
             Book an Event
           </Button>
           <Button
@@ -127,13 +139,10 @@ const ScrollLink = ({ href, label, isActive }: ScrollLinkProps) => {
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     const targetId = href.replace(/\/#/, "");
-    const element = document.getElementById(targetId);
-    if (element) {
-      window.scrollTo({
-        top: element.offsetTop - 80, // Offset for header
-        behavior: "smooth",
-      });
-    }
+    smoothScrollToElement(targetId, { 
+      offsetPx: 80,
+      duration: 1000
+    });
   };
 
   return (
@@ -141,13 +150,15 @@ const ScrollLink = ({ href, label, isActive }: ScrollLinkProps) => {
       href={href}
       onClick={handleClick}
       className={`text-sm transition-colors relative ${
-        isActive ? "text-white" : "text-gray-300 hover:text-white"
+        isActive 
+          ? "bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500" 
+          : "text-gray-300 hover:text-primary"
       }`}
     >
       {label}
       {isActive && (
         <motion.span
-          className="absolute -bottom-1 left-0 w-full h-0.5 bg-primary"
+          className="absolute -bottom-1 left-0 w-full h-0.5 bg-gradient-to-r from-primary to-purple-500"
           layoutId="navbar-indicator"
         />
       )}
